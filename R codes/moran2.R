@@ -1,34 +1,32 @@
-########### verify absorption probabilities ############
-L = 20 #how many proportions of A considered
-M = 10 #number of simulations to get proportion of times of absorption at A
-N = 200 #Population size
-p = seq(0.01, 0.99, length = L)
-
 library(GillespieSSA)
+
 transitions = cbind(c(-1,1), c(1,-1))
 
-
-proportion.fixation = NULL
-  
-for(i in 1:L){
-  initial.A = floor(N*p[i])
+draw_A = function(N, p ){
+  initial.A = floor(N*p)
   initial.a = N - initial.A
-  n.abs.A = 0
-  for(j in 1:M){
-    #set.seed(j)
-    r = ssa(c(Y1 = initial.A, Y2 = initial.a),  a = c("{Y1}*{Y2}/N", "{Y1}*{Y2}/N") ,transitions, 
-            parms = NULL, tf = Inf, method = ssa.otl())
-    tau_disc = length(r$data[,1])
-    if(r$data[tau_disc, 2] == N){n.abs.A = n.abs.A + 1}
-    #rm(simu)
-  }
-  proportion.fixation = c(proportion.fixation, (n.abs.A/M))
   
+  r = ssa(c(Y1 = initial.A, Y2 = initial.a),  a = c("{Y1}*{Y2}/N", "{Y1}*{Y2}/N") ,transitions, 
+          parms = NULL, tf = Inf, method = ssa.otl())
+  
+  plot(r$data[,1], r$data[,2], cex = 0.4, pch = 20, type = 'b', xlab = "time", ylab = "A(t)")
 }
 
+draw_A(2000, 0.5)
 
+draw_hetero = function(N, p ){
+  initial.A = floor(N*p)
+  initial.a = N - initial.A
+  
+  r = ssa(c(Y1 = initial.A, Y2 = initial.a),  a = c("{Y1}*{Y2}/N", "{Y1}*{Y2}/N") ,transitions, 
+          parms = NULL, tf = Inf, method = ssa.etl())
+  
+  h = NULL
+  for(i in 1:length(r$data[,1])){
+    het = 2*r$data[i,2]*r$data[i,3]/(N^2)
+    h = c(h, het)
+  }
+  plot(r$data[,1], h, cex = 0.4, pch = 20, type = 'p', xlab = "time", ylab = "Heterozygosity(t)")
+}
 
-
-
-plot(p, proportion.fixation, pch = 20, cex = 0.8, col = "darkgreen", 
-     xlab = "Proportion of allele A initially", ylab = "Proportion of times absorbed at A")
+draw_hetero(2000, 0.5)
